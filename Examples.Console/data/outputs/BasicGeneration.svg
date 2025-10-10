@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="596px" height="456px" viewBox="0 0 596 456" class="barcode-canvas" version="1.1" style="shape-rendering:crispEdges;" xmlns="http://www.w3.org/2000/svg">
+  <g text-rendering="geometricPrecision" fill="#000000">
+    <rect x="0" y="0" width="596" height="456" fill="#ffffff" />
+    <rect x="21" y="21" width="4" height="378" />
+    <rect x="27" y="21" width="2" height="378" />
+    <rect x="33" y="21" width="2" height="378" />
+    <rect x="43" y="21" width="2" height="378" />
+    <rect x="47" y="21" width="2" height="378" />
+    <rect x="55" y="21" width="4" height="378" />
+    <rect x="65" y="21" width="2" height="378" />
+    <rect x="69" y="21" width="8" height="378" />
+    <rect x="81" y="21" width="2" height="378" />
+    <rect x="87" y="21" width="2" height="378" />
+    <rect x="91" y="21" width="2" height="378" />
+    <rect x="97" y="21" width="8" height="378" />
+    <rect x="109" y="21" width="2" height="378" />
+    <rect x="117" y="21" width="8" height="378" />
+    <rect x="127" y="21" width="2" height="378" />
+    <rect x="131" y="21" width="2" height="378" />
+    <rect x="135" y="21" width="8" height="378" />
+    <rect x="147" y="21" width="2" height="378" />
+    <rect x="153" y="21" width="2" height="378" />
+    <rect x="157" y="21" width="4" height="378" />
+    <rect x="165" y="21" width="2" height="378" />
+    <rect x="175" y="21" width="2" height="378" />
+    <rect x="181" y="21" width="4" height="378" />
+    <rect x="189" y="21" width="6" height="378" />
+    <rect x="197" y="21" width="2" height="378" />
+    <rect x="205" y="21" width="2" height="378" />
+    <rect x="209" y="21" width="4" height="378" />
+    <rect x="219" y="21" width="2" height="378" />
+    <rect x="225" y="21" width="2" height="378" />
+    <rect x="229" y="21" width="4" height="378" />
+    <rect x="241" y="21" width="2" height="378" />
+    <rect x="247" y="21" width="2" height="378" />
+    <rect x="253" y="21" width="8" height="378" />
+    <rect x="263" y="21" width="2" height="378" />
+    <rect x="271" y="21" width="2" height="378" />
+    <rect x="279" y="21" width="4" height="378" />
+    <rect x="285" y="21" width="2" height="378" />
+    <rect x="293" y="21" width="8" height="378" />
+    <rect x="303" y="21" width="2" height="378" />
+    <rect x="307" y="21" width="2" height="378" />
+    <rect x="317" y="21" width="2" height="378" />
+    <rect x="323" y="21" width="4" height="378" />
+    <rect x="329" y="21" width="2" height="378" />
+    <rect x="333" y="21" width="4" height="378" />
+    <rect x="341" y="21" width="2" height="378" />
+    <rect x="351" y="21" width="4" height="378" />
+    <rect x="357" y="21" width="4" height="378" />
+    <rect x="365" y="21" width="4" height="378" />
+    <rect x="373" y="21" width="2" height="378" />
+    <rect x="381" y="21" width="4" height="378" />
+    <rect x="387" y="21" width="2" height="378" />
+    <rect x="395" y="21" width="8" height="378" />
+    <rect x="407" y="21" width="2" height="378" />
+    <rect x="413" y="21" width="2" height="378" />
+    <rect x="417" y="21" width="2" height="378" />
+    <rect x="423" y="21" width="2" height="378" />
+    <rect x="427" y="21" width="4" height="378" />
+    <rect x="439" y="21" width="8" height="378" />
+    <rect x="449" y="21" width="6" height="378" />
+    <rect x="457" y="21" width="2" height="378" />
+    <rect x="461" y="21" width="2" height="378" />
+    <rect x="465" y="21" width="2" height="378" />
+    <rect x="471" y="21" width="8" height="378" />
+    <rect x="483" y="21" width="4" height="378" />
+    <rect x="491" y="21" width="2" height="378" />
+    <rect x="495" y="21" width="2" height="378" />
+    <rect x="505" y="21" width="2" height="378" />
+    <rect x="509" y="21" width="4" height="378" />
+    <rect x="517" y="21" width="2" height="378" />
+    <rect x="527" y="21" width="2" height="378" />
+    <rect x="533" y="21" width="4" height="378" />
+    <rect x="539" y="21" width="6" height="378" />
+    <rect x="549" y="21" width="4" height="378" />
+    <rect x="559" y="21" width="6" height="378" />
+    <rect x="567" y="21" width="2" height="378" />
+    <rect x="571" y="21" width="4" height="378" />
+    <g transform="translate(184, 425)">
+      <text font-size="13.5pt" font-family="Open Sans, Helvetica, sans-serif">Aspose.BarCode Example</text>
+    </g>
+  </g>
+</svg>
