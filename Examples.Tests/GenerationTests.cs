@@ -76,4 +76,28 @@ public class GenerationTests
             }
         }
     }
+
+    [Fact]
+    public void SimpleQRExample_ShouldCreateFile()
+    {
+        // Arrange
+        var testOutputName = $"Test_SimpleQR_{Guid.NewGuid():N}";
+        var baseDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        var expectedFile = Path.Combine(baseDir, "data", "outputs", $"{testOutputName}_SimpleQR.png");
+
+        try
+        {
+            // Act
+            Examples.Core.Generation.SimpleQRExample.Run(testOutputName);
+
+            // Assert
+            Assert.True(File.Exists(expectedFile), $"QR code file should be created at {expectedFile}");
+            Assert.True(new FileInfo(expectedFile).Length > 0, "QR code file should not be empty");
+        }
+        finally
+        {
+            // Cleanup
+            if (File.Exists(expectedFile)) File.Delete(expectedFile);
+        }
+    }
 }

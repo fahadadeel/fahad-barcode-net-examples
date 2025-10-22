@@ -1,0 +1,105 @@
+name: Auto-Generate Documentation
+on:
+  push:
+    paths:
+      - 'Examples.Core/**/*.cs'
+    branches:
+      - main
+      - develop
+  pull_request:
+    paths:
+      - 'Examples.Core/**/*.cs'
+    types: [opened, synchronize]
+
+env:
+  LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+  DOCUMENTATION_REPO: 'aspose-barcode/Aspose.BarCode-Documentation'
+  DOCUMENTATION_TOKEN: ${{ secrets.DOCUMENTATION_REPO_TOKEN }}
+
+jobs:
+  detect-new-examples:
+    runs-on: ubuntu-latest
+    outputs:
+      examples: ${{ steps.detect.outputs.examples }}
+      has_new_examples: ${{ steps.detect.outputs.has_new_examples }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r .github/scripts/requirements.txt
+
+      - name: Detect New Examples
+        id: detect
+        run: |
+          python3 .github/scripts/detect_examples.py
+
+  generate-documentation:
+    needs: detect-new-examples
+    if: needs.detect-new-examples.outputs.has_new_examples == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example: ${{ fromJson(needs.detect-new-examples.outputs.examples) }}
+    steps:
+      - name: Checkout Examples Repo
+        uses: actions/checkout@v4
+        with:
+          path: examples-repo
+
+      - name: Checkout Documentation Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DOCUMENTATION_REPO }}
+          token: ${{ env.DOCUMENTATION_TOKEN }}
+          path: docs-repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r examples-repo/.github/scripts/requirements.txt
+
+      - name: Generate Documentation
+        run: |
+          python3 examples-repo/.github/scripts/generate_docs.py \
+            --example-file "${{ matrix.example }}" \
+            --examples-repo "examples-repo" \
+            --docs-repo "docs-repo"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          path: docs-repo
+          token: ${{ env.DOCUMENTATION_TOKEN }}
+          commit-message: 'docs: Add documentation for ${{ matrix.example }}'
+          title: 'Auto-generated documentation for ${{ matrix.example }}'
+          body: |
+            ## Auto-generated Documentation
+
+            This PR was automatically generated for the new example: `${{ matrix.example }}`
+
+            ### Changes
+            - Added documentation based on code analysis using AI
+            - Followed existing documentation structure and patterns
+            - Included code examples and proper formatting
+
+            ### Source
+            Generated from: `${{ matrix.example }}`
+            Repository: `${{ github.repository }}`
+            Commit: `${{ github.sha }}`
+
+            Please review the generated content for accuracy and completeness.
+          branch: auto-docs/${{ matrix.example }}-${{ github.run_number }}
+          delete-branch: true

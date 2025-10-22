@@ -119,6 +119,7 @@ public sealed class DemoRunner : IHostedService
         _log.LogInformation("📊 Running Generation Examples");
         Examples.Core.Generation.BasicGenerationExample.Run("BasicGeneration");
         Examples.Core.Generation.QRCodeExample.Run("QRCodeGeneration");
+        Examples.Core.Generation.SimpleQRExample.Run("SimpleQRExample");
     }
 
     private void RunReadingExamples()
