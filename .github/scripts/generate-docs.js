@@ -121,23 +121,33 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
     /**
      * Load Gist information from file created by create-gists.js
      */
-    loadGistInfo(exampleFile) {
+    loadGistInfo(exampleFile, examplesRepoPath) {
         try {
             const baseName = path.basename(exampleFile, '.cs');
-            // Look for gist file in the same directory as this script
-            const scriptDir = path.dirname(new URL(import.meta.url).pathname);
-            const gistDataFile = path.join(scriptDir, `gist-${baseName}.json`);
             
-            console.log(`🔍 Looking for gist file: ${gistDataFile}`);
+            // Try multiple locations for the gist file
+            const possiblePaths = [
+                // Same directory as this script
+                path.join(path.dirname(new URL(import.meta.url).pathname), `gist-${baseName}.json`),
+                // In the examples repo .github/scripts directory
+                path.join(examplesRepoPath, '.github', 'scripts', `gist-${baseName}.json`),
+                // Current working directory
+                path.join(process.cwd(), `gist-${baseName}.json`)
+            ];
             
-            if (existsSync(gistDataFile)) {
-                const gistData = JSON.parse(readFileSync(gistDataFile, 'utf8'));
-                console.log(`📖 Loaded Gist data: ${gistData.url}`);
-                return gistData;
-            } else {
-                console.log(`⚠️ No Gist data file found: ${gistDataFile}`);
-                return null;
+            for (const gistDataFile of possiblePaths) {
+                console.log(`🔍 Looking for gist file: ${gistDataFile}`);
+                
+                if (existsSync(gistDataFile)) {
+                    const gistData = JSON.parse(readFileSync(gistDataFile, 'utf8'));
+                    console.log(`📖 Loaded Gist data from: ${gistDataFile}`);
+                    console.log(`📖 Gist URL: ${gistData.url}`);
+                    return gistData;
+                }
             }
+            
+            console.log(`⚠️ No Gist data file found in any location for: gist-${baseName}.json`);
+            return null;
         } catch (error) {
             console.log(`⚠️ Error loading Gist data: ${error.message}`);
             return null;
@@ -403,7 +413,7 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
         console.log(`📊 Analysis complete: ${analysis.title}`);
         
         // Load Gist information (created by create-gists.js)
-        const gistInfo = this.loadGistInfo(exampleFile);
+        const gistInfo = this.loadGistInfo(exampleFile, examplesRepoPath);
         
         // Generate documentation content
         const docContent = this.generateDocumentationContent(analysis, codeContent, examplePath, gistInfo);
