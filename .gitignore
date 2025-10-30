@@ -29,3 +29,41 @@ obj/
 
 # Output directories
 data/outputs/
+
+# Node.js dependencies and files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# GitHub Actions script dependencies
+.github/scripts/node_modules/
+.github/scripts/npm-debug.log*
+.github/scripts/yarn-debug.log*
+
+# Python cache and bytecode files (from previous Python implementation)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment files (if any secrets are added)
+.env
+.env.local
+.env.*.local
+
+# Generated Gist data files (from create-gists.js)
+.github/scripts/gist-*.json
+
+# Test coverage
+coverage/
+.nyc_output/
