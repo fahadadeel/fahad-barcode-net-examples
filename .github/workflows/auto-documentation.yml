@@ -45,15 +45,51 @@ jobs:
         working-directory: .github/scripts
         run: node detect-examples.js
 
-  create-gists:
+  validate-examples:
     needs: detect-new-examples
     if: needs.detect-new-examples.outputs.has_new_examples == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      validation_passed: ${{ steps.validate.outputs.validation_passed }}
+      valid_examples: ${{ steps.validate.outputs.valid_examples }}
+      validation_summary: ${{ steps.validate.outputs.validation_summary }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '.github/scripts/package.json'
+
+      - name: Install Dependencies
+        working-directory: .github/scripts
+        run: npm ci
+
+      - name: Validate All Examples
+        id: validate
+        working-directory: .github/scripts
+        run: |
+          EXAMPLES_LIST="${{ join(fromJson(needs.detect-new-examples.outputs.examples), ',') }}"
+          echo "� Validating examples: $EXAMPLES_LIST"
+          node validate-examples.js --example-files "$EXAMPLES_LIST"
+
+  create-gists:
+    needs: [detect-new-examples, validate-examples]
+    if: needs.detect-new-examples.outputs.has_new_examples == 'true' && needs.validate-examples.outputs.validation_passed == 'true'
     runs-on: ubuntu-latest
     outputs:
       gist_data: ${{ steps.create_gists.outputs.gist_data }}
     strategy:
       matrix:
-        example: ${{ fromJson(needs.detect-new-examples.outputs.examples) }}
+        example: ${{ fromJson(needs.validate-examples.outputs.valid_examples) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -78,26 +114,46 @@ jobs:
             --examples-repo ".."
 
   generate-documentation:
-    needs: [detect-new-examples, create-gists]
-    if: needs.detect-new-examples.outputs.has_new_examples == 'true'
+    needs: [detect-new-examples, validate-examples, create-gists]
+    if: needs.detect-new-examples.outputs.has_new_examples == 'true' && needs.validate-examples.outputs.validation_passed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        example: ${{ fromJson(needs.detect-new-examples.outputs.examples) }}
+        example: ${{ fromJson(needs.validate-examples.outputs.valid_examples) }}
     steps:
+      - name: Check Documentation Repository Configuration
+        id: check_docs_repo
+        run: |
+          if [ -z "${{ env.DOCUMENTATION_REPO }}" ] || [ "${{ env.DOCUMENTATION_REPO }}" = "" ]; then
+            echo "⚠️ DOCUMENTATION_REPO not configured. Skipping documentation generation."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            # Extract repo name from URL if it's a full GitHub URL
+            REPO_NAME="${{ env.DOCUMENTATION_REPO }}"
+            if [[ "$REPO_NAME" == https://github.com/* ]]; then
+              REPO_NAME=$(echo "$REPO_NAME" | sed 's|https://github.com/||')
+            fi
+            echo "✅ DOCUMENTATION_REPO configured: $REPO_NAME"
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout Examples Repo
+        if: steps.check_docs_repo.outputs.skip == 'false'
         uses: actions/checkout@v4
         with:
           path: examples-repo
 
       - name: Checkout Documentation Repo
+        if: steps.check_docs_repo.outputs.skip == 'false'
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.DOCUMENTATION_REPO }}
+          repository: ${{ steps.check_docs_repo.outputs.repo_name }}
           token: ${{ env.DOCUMENTATION_TOKEN }}
           path: docs-repo
 
       - name: Setup Node.js
+        if: steps.check_docs_repo.outputs.skip == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -105,10 +161,12 @@ jobs:
           cache-dependency-path: 'examples-repo/.github/scripts/package.json'
 
       - name: Install Dependencies
+        if: steps.check_docs_repo.outputs.skip == 'false'
         working-directory: examples-repo/.github/scripts
         run: npm ci
 
       - name: Generate Documentation
+        if: steps.check_docs_repo.outputs.skip == 'false'
         working-directory: examples-repo/.github/scripts
         run: |
           node generate-docs.js \
@@ -117,6 +175,7 @@ jobs:
             --docs-repo "../../../docs-repo"
 
       - name: Create Pull Request
+        if: steps.check_docs_repo.outputs.skip == 'false'
         uses: peter-evans/create-pull-request@v5
         with:
           path: docs-repo
