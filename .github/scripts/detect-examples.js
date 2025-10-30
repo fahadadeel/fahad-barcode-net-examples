@@ -9,6 +9,12 @@ import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { writeFileSync, appendFileSync } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the repository root directory (two levels up from .github/scripts)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 /**
  * Get changed files from git diff
@@ -38,29 +44,22 @@ function getGitChanges() {
  */
 function isExampleFile(filePath) {
   // Normalize slashes for consistency (important for GitHub runner)
-console.log(`Checking filePath: ${filePath}`);  
-
   const normalizedPath = filePath.replace(/\\/g, "/");
   const pathParts = normalizedPath.split("/");
 
-  console.log(`Checking normalizedPath: ${normalizedPath}`);
-  console.log(`Checking pathParts: ${pathParts}`);
   // Must be in Examples.Core directory
   if (!pathParts.includes("Examples.Core")) {
-    console.log(`Rejected: Not in Examples.Core`);
     return false;
   }
 
   // Must be a C# file
   if (!normalizedPath.endsWith(".cs")) {
-    console.log(`Rejected: Not a C# file`);
     return false;
   }
 
   // Skip LicenseHelper.cs and test files
   const fileName = path.basename(normalizedPath);
   if (fileName === "LicenseHelper.cs" || fileName.includes("Test")) {
-    console.log(`Rejected: Not a valid example file`);
     return false;
   }
 
@@ -95,8 +94,13 @@ function main() {
     const exampleFiles = [];
     for (const filePath of changedFiles) {
         if (isExampleFile(filePath)) {
+            // In GitHub Actions, working directory is .github/scripts
+            // Repository root is 2 levels up: ../..
+            const repoRoot = path.resolve('..', '..');
+            const fullFilePath = path.resolve(repoRoot, filePath);
+            
             // Check if file exists (not deleted)
-            if (existsSync(filePath)) {
+            if (existsSync(fullFilePath)) {
                 exampleFiles.push({
                     path: filePath,
                     category: getExampleCategory(filePath),
@@ -122,8 +126,9 @@ function main() {
     console.log(`✅ Has new examples: ${hasNewExamples}`);
     console.log(`📋 Examples JSON: ${JSON.stringify(examplePaths)}`);
     
-    // Exit with appropriate code
-    process.exit(hasNewExamples ? 0 : 1);
+    // Always exit with code 0 for successful execution
+    // The workflow will check has_new_examples output to determine next steps
+    process.exit(0);
 }
 
 // Run if this file is executed directly
