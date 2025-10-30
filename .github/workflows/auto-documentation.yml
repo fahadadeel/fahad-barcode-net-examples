@@ -13,8 +13,8 @@ on:
 
 env:
   LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
-  GITHUB_GIST_TOKEN: ${{ secrets.GITHUB_GIST_TOKEN }}
-  DOCUMENTATION_REPO: 'aspose-barcode/Aspose.BarCode-Documentation'
+  GITHUB_GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+  DOCUMENTATION_REPO: ${{ secrets.DOCUMENTATION_REPO }}
   DOCUMENTATION_TOKEN: ${{ secrets.DOCUMENTATION_REPO_TOKEN }}
 
 jobs:
