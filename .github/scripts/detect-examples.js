@@ -37,27 +37,29 @@ function getGitChanges() {
  * Check if a file is an example file in Examples.Core
  */
 function isExampleFile(filePath) {
-    const pathParts = filePath.split('/');
-    
-    // Must be in Examples.Core directory
-    if (!pathParts.includes('Examples.Core')) {
-        return false;
-    }
-    
-    // Must be a C# file
-    if (!filePath.endsWith('.cs')) {
-        return false;
-    }
-    
-    // Skip LicenseHelper.cs and test files
-    const fileName = path.basename(filePath);
-    if (fileName === 'LicenseHelper.cs' || fileName.includes('Test')) {
-        return false;
-    }
-    
-    // Must be in a valid category directory
-    const validCategories = ['Generation', 'Reading', 'Formatting', 'Advanced'];
-    return validCategories.some(category => filePath.includes(category));
+  // Normalize slashes for consistency (important for GitHub runner)
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  const pathParts = normalizedPath.split("/");
+
+  // Must be in Examples.Core directory
+  if (!pathParts.includes("Examples.Core")) {
+    return false;
+  }
+
+  // Must be a C# file
+  if (!normalizedPath.endsWith(".cs")) {
+    return false;
+  }
+
+  // Skip LicenseHelper.cs and test files
+  const fileName = path.basename(normalizedPath);
+  if (fileName === "LicenseHelper.cs" || fileName.includes("Test")) {
+    return false;
+  }
+
+  // Must be in a valid category directory
+  const validCategories = ["Generation", "Reading", "Formatting", "Advanced"];
+  return validCategories.some((category) => normalizedPath.includes(category));
 }
 
 /**
