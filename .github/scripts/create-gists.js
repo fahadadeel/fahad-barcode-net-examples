@@ -10,6 +10,12 @@ import { readFileSync, writeFileSync, appendFileSync } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';
 import { program } from 'commander';
+import { fileURLToPath } from 'url';
+
+// Get the repository root directory (two levels up from .github/scripts)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 class GistManager {
     constructor(githubToken) {
@@ -117,7 +123,10 @@ class GistManager {
      * Main method to create Gist for an example file
      */
     async createGistForExample(exampleFile, examplesRepoPath) {
-        const examplePath = path.join(examplesRepoPath, exampleFile);
+        // Use absolute path resolution from repository root
+        const examplePath = path.resolve(REPO_ROOT, exampleFile);
+        
+        console.log(`🔍 Looking for example file at: ${examplePath}`);
         
         if (!existsSync(examplePath)) {
             console.error(`❌ Example file not found: ${examplePath}`);
