@@ -38,22 +38,29 @@ function getGitChanges() {
  */
 function isExampleFile(filePath) {
   // Normalize slashes for consistency (important for GitHub runner)
+console.log(`Checking filePath: ${filePath}`);  
+
   const normalizedPath = filePath.replace(/\\/g, "/");
   const pathParts = normalizedPath.split("/");
 
+  console.log(`Checking normalizedPath: ${normalizedPath}`);
+  console.log(`Checking pathParts: ${pathParts}`);
   // Must be in Examples.Core directory
   if (!pathParts.includes("Examples.Core")) {
+    console.log(`Rejected: Not in Examples.Core`);
     return false;
   }
 
   // Must be a C# file
   if (!normalizedPath.endsWith(".cs")) {
+    console.log(`Rejected: Not a C# file`);
     return false;
   }
 
   // Skip LicenseHelper.cs and test files
   const fileName = path.basename(normalizedPath);
   if (fileName === "LicenseHelper.cs" || fileName.includes("Test")) {
+    console.log(`Rejected: Not a valid example file`);
     return false;
   }
 
