@@ -124,7 +124,11 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
     loadGistInfo(exampleFile) {
         try {
             const baseName = path.basename(exampleFile, '.cs');
-            const gistDataFile = path.join(process.cwd(), `gist-${baseName}.json`);
+            // Look for gist file in the same directory as this script
+            const scriptDir = path.dirname(new URL(import.meta.url).pathname);
+            const gistDataFile = path.join(scriptDir, `gist-${baseName}.json`);
+            
+            console.log(`🔍 Looking for gist file: ${gistDataFile}`);
             
             if (existsSync(gistDataFile)) {
                 const gistData = JSON.parse(readFileSync(gistDataFile, 'utf8'));
