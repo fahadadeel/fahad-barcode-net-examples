@@ -18,7 +18,7 @@ public static class BasicReadingExample_Test
 
         if (!File.Exists(sampleFile))
         {
-            Console.WriteLine("⚠️ Sample barcode file not found. Generating one.....");
+            Console.WriteLine("⚠️ Sample barcode file not found. Generating one..... test");
 
             using var generator = new Aspose.BarCode.Generation.BarcodeGenerator(
                 Aspose.BarCode.Generation.EncodeTypes.Code128, "Workflow Test 123"
