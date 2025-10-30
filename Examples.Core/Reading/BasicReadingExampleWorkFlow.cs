@@ -39,6 +39,6 @@ public static class BasicReadingExampleWorkFlow
             Console.WriteLine($"✅ Found barcode: {result.CodeText} ({result.CodeTypeName})");
         }
 
-        Console.WriteLine($"✅ Workflow test completed successfully");
+        Console.WriteLine($"✅ Workflow test completed successfully...");
     }
 }
