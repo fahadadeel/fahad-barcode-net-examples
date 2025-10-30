@@ -259,8 +259,11 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
         // Key features (if available)
         if (analysis.key_features && analysis.key_features.length > 0) {
             contentParts.push('## Key Features');
+            contentParts.push('');
             analysis.key_features.forEach(feature => {
-                contentParts.push(`- ${feature}`);
+                // Ensure feature is a string
+                const featureText = typeof feature === 'string' ? feature : String(feature);
+                contentParts.push(`- ${featureText}`);
             });
             contentParts.push('');
         }
@@ -271,48 +274,37 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             contentParts.push('');
         }
         
-        // Add Gist section if available
-        if (gistInfo) {
-            contentParts.push('## Interactive Code Example');
-            contentParts.push('');
-            contentParts.push(`You can view and run this example interactively on GitHub Gist: [${analysis.title} Example](${gistInfo.url})`);
-            contentParts.push('');
-            
-            // Extract GitHub username and Gist ID from URL for proper embedding
-            const gistUrlMatch = gistInfo.url.match(/https:\/\/gist\.github\.com\/([^\/]+)\/([a-f0-9]+)/);
-            if (gistUrlMatch) {
-                const [, username, gistId] = gistUrlMatch;
-                const fileName = gistInfo.fileName || `${path.basename(examplePath)}`;
-                contentParts.push(`{{< gist "${username}" "${gistId}" "${fileName}" >}}`);
-            } else {
-                // Fallback to generic embed if URL parsing fails
-                contentParts.push(gistInfo.embedUrl);
-            }
-            contentParts.push('');
-        }
-        
-        // Code example
+        // Source Code section with Gist integration
         contentParts.push('## Source Code');
         contentParts.push('');
         contentParts.push('The following code sample demonstrates the implementation:');
         contentParts.push('');
-        contentParts.push('{{< highlight csharp>}}');
-        contentParts.push(this.cleanCodeForDocs(codeContent));
-        contentParts.push('{{< /highlight >}}');
         
-        // Add download/clone instructions if Gist is available
+        if (gistInfo) {
+            // Use Aspose standard gist embedding format
+            const owner = 'aspose-com-gists';
+            const gistId = gistInfo.id;
+            const fileName = gistInfo.fileName || path.basename(examplePath);
+            contentParts.push(`{{< gist "${owner}" "${gistId}" "${fileName}" >}}`);
+        } else {
+            // Fallback to highlighted code if no gist available
+            contentParts.push('{{< highlight csharp>}}');
+            contentParts.push(this.cleanCodeForDocs(codeContent));
+            contentParts.push('{{< /highlight >}}');
+        }
+        
+        // Add usage instructions if Gist is available
         if (gistInfo) {
             contentParts.push('');
-            contentParts.push('## How to Use');
+            contentParts.push('## How to Use This Example');
             contentParts.push('');
-            contentParts.push('1. **View Online**: Visit the [GitHub Gist](' + gistInfo.url + ') to see the complete example');
-            contentParts.push('2. **Download**: Clone or download the example directly from the Gist');
-            contentParts.push('3. **Integration**: Copy the code into your Aspose.BarCode project');
-            contentParts.push('');
-            contentParts.push('### Quick Clone');
-            contentParts.push('```bash');
-            contentParts.push(`git clone https://gist.github.com/${gistInfo.id}.git`);
-            contentParts.push('```');
+            contentParts.push('1. **Copy the Code**: Use the copy button in the code block above to copy the complete example');
+            contentParts.push('2. **View Full Gist**: Visit the [complete example on GitHub Gist](' + gistInfo.url + ') for additional files and documentation');
+            contentParts.push('3. **Download**: Clone the gist directly to your machine:');
+            contentParts.push('   ```bash');
+            contentParts.push(`   git clone https://gist.github.com/${gistInfo.id}.git`);
+            contentParts.push('   ```');
+            contentParts.push('4. **Integration**: Add the code to your Aspose.BarCode for .NET project and ensure proper license setup');
         }
         
         // Combine front matter and content
@@ -352,17 +344,14 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             
             if (inClass && stripped.includes('public static void Run(')) {
                 inMethod = true;
+                // Count braces in the method signature line
+                braceCount += (stripped.match(/\{/g) || []).length - (stripped.match(/\}/g) || []).length;
                 continue;
             }
             
             // Track braces to know when method ends
             if (inMethod) {
                 braceCount += (stripped.match(/\{/g) || []).length - (stripped.match(/\}/g) || []).length;
-                
-                // Skip the method signature line
-                if (stripped.includes('public static void Run(')) {
-                    continue;
-                }
                 
                 // Add the line (with original indentation adjusted)
                 if (stripped) {
