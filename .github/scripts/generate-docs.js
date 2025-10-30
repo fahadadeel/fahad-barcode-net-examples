@@ -277,9 +277,17 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             contentParts.push('');
             contentParts.push(`You can view and run this example interactively on GitHub Gist: [${analysis.title} Example](${gistInfo.url})`);
             contentParts.push('');
-            contentParts.push('{{< gist-embed >}}');
-            contentParts.push(gistInfo.embedUrl);
-            contentParts.push('{{< /gist-embed >}}');
+            
+            // Extract GitHub username and Gist ID from URL for proper embedding
+            const gistUrlMatch = gistInfo.url.match(/https:\/\/gist\.github\.com\/([^\/]+)\/([a-f0-9]+)/);
+            if (gistUrlMatch) {
+                const [, username, gistId] = gistUrlMatch;
+                const fileName = gistInfo.fileName || `${path.basename(examplePath)}`;
+                contentParts.push(`{{< gist "${username}" "${gistId}" "${fileName}" >}}`);
+            } else {
+                // Fallback to generic embed if URL parsing fails
+                contentParts.push(gistInfo.embedUrl);
+            }
             contentParts.push('');
         }
         
