@@ -125,17 +125,21 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
         try {
             const baseName = path.basename(exampleFile, '.cs');
             
-            // Try multiple locations for the gist file (simplified approach)
+            // Try multiple locations for the gist file (dynamic paths for any repository)
             const possiblePaths = [
-                // Same directory as this script (most reliable for both local and CI)
+                // Same directory as this script (most reliable for local development)
                 path.join(path.dirname(new URL(import.meta.url).pathname), `gist-${baseName}.json`),
-                // In the examples repo .github/scripts directory
+                // In the examples repo .github/scripts directory  
                 path.join(examplesRepoPath, '.github', 'scripts', `gist-${baseName}.json`),
-                // Parent directory .github/scripts (for GitHub Actions)
-                path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '.github', 'scripts', `gist-${baseName}.json`),
-                // Root level .github/scripts directory
-                path.resolve(process.cwd(), '.github', 'scripts', `gist-${baseName}.json`)
-            ];
+                // GitHub Actions: Go up from examples-repo to main repo .github/scripts
+                path.resolve(examplesRepoPath, '..', '.github', 'scripts', `gist-${baseName}.json`),
+                // GitHub Actions: Use GITHUB_WORKSPACE environment variable if available
+                process.env.GITHUB_WORKSPACE ? path.join(process.env.GITHUB_WORKSPACE, '.github', 'scripts', `gist-${baseName}.json`) : null,
+                // GitHub Actions: Relative from current working directory
+                path.resolve(process.cwd(), '..', '..', '..', '.github', 'scripts', `gist-${baseName}.json`),
+                // Local development: Parent directory .github/scripts
+                path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '.github', 'scripts', `gist-${baseName}.json`)
+            ].filter(Boolean);
             
             for (const gistDataFile of possiblePaths) {
                 console.log(`🔍 Looking for gist file: ${gistDataFile}`);
