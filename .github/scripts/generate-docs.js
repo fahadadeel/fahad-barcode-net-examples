@@ -125,24 +125,17 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
         try {
             const baseName = path.basename(exampleFile, '.cs');
             
-            // Try multiple locations for the gist file
+            // Try multiple locations for the gist file (simplified approach)
             const possiblePaths = [
-                // Same directory as this script
+                // Same directory as this script (most reliable for both local and CI)
                 path.join(path.dirname(new URL(import.meta.url).pathname), `gist-${baseName}.json`),
                 // In the examples repo .github/scripts directory
                 path.join(examplesRepoPath, '.github', 'scripts', `gist-${baseName}.json`),
-                // Current working directory
-                path.join(process.cwd(), `gist-${baseName}.json`),
-                // Try going up from examples repo path to find the real repo root
-                path.join(path.dirname(examplesRepoPath), '.github', 'scripts', `gist-${baseName}.json`),
-                // GitHub Actions specific: if examplesRepoPath ends with 'examples-repo', remove it
-                examplesRepoPath.endsWith('examples-repo') ? 
-                    path.join(examplesRepoPath.replace(/\/examples-repo$/, ''), '.github', 'scripts', `gist-${baseName}.json`) : null,
-                // Try absolute path resolution - go up two levels from script location  
+                // Parent directory .github/scripts (for GitHub Actions)
                 path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '.github', 'scripts', `gist-${baseName}.json`),
-                // Try relative path from current working directory
-                path.resolve(process.cwd(), '..', '..', '.github', 'scripts', `gist-${baseName}.json`)
-            ].filter(Boolean); // Remove null values
+                // Root level .github/scripts directory
+                path.resolve(process.cwd(), '.github', 'scripts', `gist-${baseName}.json`)
+            ];
             
             for (const gistDataFile of possiblePaths) {
                 console.log(`🔍 Looking for gist file: ${gistDataFile}`);
@@ -304,10 +297,29 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
         contentParts.push('');
         
         if (gistInfo) {
-            // Use Aspose standard gist embedding format
-            const owner = 'aspose-com-gists';
+            // Extract gist information for embedding
             const gistId = gistInfo.id;
             const fileName = gistInfo.fileName || path.basename(examplePath);
+            
+            // Extract owner from gist URL (e.g., https://gist.github.com/username/gistid)
+            let owner = 'aspose-com-gists'; // Default for Aspose documentation
+            try {
+                if (gistInfo.url && typeof gistInfo.url === 'string' && gistInfo.url.includes('gist.github.com/')) {
+                    const urlParts = gistInfo.url.split('/').filter(part => part.length > 0);
+                    // URL format: https://gist.github.com/username/gistid
+                    const gistGithubIndex = urlParts.findIndex(part => part === 'gist.github.com');
+                    if (gistGithubIndex >= 0 && urlParts[gistGithubIndex + 1]) {
+                        const extractedOwner = urlParts[gistGithubIndex + 1];
+                        if (extractedOwner && extractedOwner !== gistId && extractedOwner.length > 0) {
+                            owner = extractedOwner;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log(`⚠️ Could not extract owner from gist URL, using default: ${owner}`);
+            }
+            
+            console.log(`🔗 Embedding gist: owner="${owner}", gistId="${gistId}", fileName="${fileName}"`);
             contentParts.push(`{{< gist "${owner}" "${gistId}" "${fileName}" >}}`);
         } else {
             // Fallback to highlighted code if no gist available
