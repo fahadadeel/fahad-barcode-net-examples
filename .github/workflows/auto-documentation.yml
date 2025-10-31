@@ -194,30 +194,71 @@ jobs:
           TARGET_BRANCH="${{ env.DOCUMENTATION_TARGET_BRANCH }}"
           echo "🔍 Checking if target branch '$TARGET_BRANCH' exists..."
           
+          # Get current branch info
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "📍 Currently on branch: $CURRENT_BRANCH"
+          
           # Check if branch exists locally
           if git show-ref --verify --quiet refs/heads/$TARGET_BRANCH; then
             echo "✅ Target branch '$TARGET_BRANCH' exists locally"
+            # Just switch to it if not already on it
+            if [ "$CURRENT_BRANCH" != "$TARGET_BRANCH" ]; then
+              git checkout $TARGET_BRANCH
+              echo "🔄 Switched to existing local branch '$TARGET_BRANCH'"
+            fi
           else
             # Check if branch exists remotely
-            if git ls-remote --exit-code --heads origin $TARGET_BRANCH; then
+            if git ls-remote --exit-code --heads origin $TARGET_BRANCH >/dev/null 2>&1; then
               echo "📥 Target branch '$TARGET_BRANCH' exists remotely, checking it out..."
-              git checkout -b $TARGET_BRANCH origin/$TARGET_BRANCH
+              git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+              git checkout $TARGET_BRANCH
+              echo "✅ Checked out remote branch '$TARGET_BRANCH'"
             else
-              echo "⚠️ Target branch '$TARGET_BRANCH' doesn't exist. Creating from default branch..."
-              # Get the default branch name
-              DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
-              echo "📍 Default branch is: $DEFAULT_BRANCH"
+              echo "⚠️ Target branch '$TARGET_BRANCH' doesn't exist. Creating from current branch..."
+              
+              # Get the default branch name with multiple fallback methods
+              DEFAULT_BRANCH=""
+              
+              # Method 1: Try symbolic-ref (most reliable when set up)
+              if DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'); then
+                echo "📍 Default branch detected via symbolic-ref: $DEFAULT_BRANCH"
+              # Method 2: Try to get from remote HEAD
+              elif DEFAULT_BRANCH=$(git ls-remote --symref origin HEAD | head -1 | awk '{print $2}' | sed 's@refs/heads/@@'); then
+                echo "📍 Default branch detected via ls-remote: $DEFAULT_BRANCH"
+              # Method 3: Common defaults fallback
+              elif git show-ref --verify --quiet refs/remotes/origin/main; then
+                DEFAULT_BRANCH="main"
+                echo "📍 Default branch fallback: $DEFAULT_BRANCH"
+              elif git show-ref --verify --quiet refs/remotes/origin/master; then
+                DEFAULT_BRANCH="master"
+                echo "📍 Default branch fallback: $DEFAULT_BRANCH"
+              else
+                # Method 4: Use current branch as last resort
+                DEFAULT_BRANCH="$CURRENT_BRANCH"
+                echo "📍 Using current branch as fallback: $DEFAULT_BRANCH"
+              fi
+              
+              # Ensure we're on the default branch
+              if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+                git checkout $DEFAULT_BRANCH
+                echo "🔄 Switched to default branch: $DEFAULT_BRANCH"
+              fi
               
               # Create new branch from default branch
-              git checkout $DEFAULT_BRANCH
               git checkout -b $TARGET_BRANCH
               git push origin $TARGET_BRANCH
               echo "✅ Created target branch '$TARGET_BRANCH' from '$DEFAULT_BRANCH'"
             fi
           fi
           
-          # Switch to target branch for documentation generation
-          git checkout $TARGET_BRANCH
+          # Verify we're on the target branch
+          FINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$FINAL_BRANCH" = "$TARGET_BRANCH" ]; then
+            echo "✅ Successfully on target branch: $TARGET_BRANCH"
+          else
+            echo "❌ ERROR: Expected to be on '$TARGET_BRANCH' but on '$FINAL_BRANCH'"
+            exit 1
+          fi
 
       - name: Setup Node.js
         if: steps.check_docs_repo.outputs.skip == 'false'
