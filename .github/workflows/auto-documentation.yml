@@ -16,6 +16,7 @@ env:
   GITHUB_GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
   DOCUMENTATION_REPO: ${{ secrets.DOCUMENTATION_REPO }}
   DOCUMENTATION_TOKEN: ${{ secrets.DOCUMENTATION_REPO_TOKEN }}
+  DOCUMENTATION_TARGET_BRANCH: ${{ secrets.DOCUMENTATION_TARGET_BRANCH }}
 
 jobs:
   detect-new-examples:
@@ -131,19 +132,46 @@ jobs:
       - name: Check Documentation Repository Configuration
         id: check_docs_repo
         run: |
+          # Check if DOCUMENTATION_REPO is configured
           if [ -z "${{ env.DOCUMENTATION_REPO }}" ] || [ "${{ env.DOCUMENTATION_REPO }}" = "" ]; then
-            echo "⚠️ DOCUMENTATION_REPO not configured. Skipping documentation generation."
+            echo "❌ DOCUMENTATION_REPO not configured. Skipping documentation generation."
             echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            # Extract repo name from URL if it's a full GitHub URL
-            REPO_NAME="${{ env.DOCUMENTATION_REPO }}"
-            if [[ "$REPO_NAME" == https://github.com/* ]]; then
-              REPO_NAME=$(echo "$REPO_NAME" | sed 's|https://github.com/||')
-            fi
-            echo "✅ DOCUMENTATION_REPO configured: $REPO_NAME"
-            echo "skip=false" >> $GITHUB_OUTPUT
-            echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+            exit 0
           fi
+          
+          # STRICT VALIDATION: DOCUMENTATION_TARGET_BRANCH must be explicitly set
+          if [ -z "${{ env.DOCUMENTATION_TARGET_BRANCH }}" ] || [ "${{ env.DOCUMENTATION_TARGET_BRANCH }}" = "" ]; then
+            echo "❌ ERROR: DOCUMENTATION_TARGET_BRANCH secret is required but not set!"
+            echo ""
+            echo "🔧 CONFIGURATION REQUIRED:"
+            echo "   Please set the DOCUMENTATION_TARGET_BRANCH secret in repository settings:"
+            echo "   Repository Settings → Secrets and Variables → Actions → New repository secret"
+            echo ""
+            echo "📋 EXAMPLE VALUES:"
+            echo "   • qa                    (for QA environment)"
+            echo "   • staging              (for staging environment)"  
+            echo "   • docs-review          (for documentation review)"
+            echo "   • dev                  (for development)"
+            echo ""
+            echo "⚠️  SECURITY NOTE:"
+            echo "   This workflow requires explicit target branch configuration to prevent"
+            echo "   accidental deployment to production branches like 'main' or 'master'."
+            echo ""
+            echo "❌ Workflow execution stopped. Please configure the required secret."
+            exit 1
+          fi
+          
+          echo "✅ DOCUMENTATION_TARGET_BRANCH explicitly set to: ${{ env.DOCUMENTATION_TARGET_BRANCH }}"
+          
+          # Extract repo name from URL if it's a full GitHub URL
+          REPO_NAME="${{ env.DOCUMENTATION_REPO }}"
+          if [[ "$REPO_NAME" == https://github.com/* ]]; then
+            REPO_NAME=$(echo "$REPO_NAME" | sed 's|https://github.com/||')
+          fi
+          echo "✅ DOCUMENTATION_REPO configured: $REPO_NAME"
+          echo "🎯 Target branch: ${{ env.DOCUMENTATION_TARGET_BRANCH }}"
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
 
       - name: Checkout Examples Repo
         if: steps.check_docs_repo.outputs.skip == 'false'
@@ -158,6 +186,38 @@ jobs:
           repository: ${{ steps.check_docs_repo.outputs.repo_name }}
           token: ${{ env.DOCUMENTATION_TOKEN }}
           path: docs-repo
+
+      - name: Validate Target Branch
+        if: steps.check_docs_repo.outputs.skip == 'false'
+        working-directory: docs-repo
+        run: |
+          TARGET_BRANCH="${{ env.DOCUMENTATION_TARGET_BRANCH }}"
+          echo "🔍 Checking if target branch '$TARGET_BRANCH' exists..."
+          
+          # Check if branch exists locally
+          if git show-ref --verify --quiet refs/heads/$TARGET_BRANCH; then
+            echo "✅ Target branch '$TARGET_BRANCH' exists locally"
+          else
+            # Check if branch exists remotely
+            if git ls-remote --exit-code --heads origin $TARGET_BRANCH; then
+              echo "📥 Target branch '$TARGET_BRANCH' exists remotely, checking it out..."
+              git checkout -b $TARGET_BRANCH origin/$TARGET_BRANCH
+            else
+              echo "⚠️ Target branch '$TARGET_BRANCH' doesn't exist. Creating from default branch..."
+              # Get the default branch name
+              DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+              echo "📍 Default branch is: $DEFAULT_BRANCH"
+              
+              # Create new branch from default branch
+              git checkout $DEFAULT_BRANCH
+              git checkout -b $TARGET_BRANCH
+              git push origin $TARGET_BRANCH
+              echo "✅ Created target branch '$TARGET_BRANCH' from '$DEFAULT_BRANCH'"
+            fi
+          fi
+          
+          # Switch to target branch for documentation generation
+          git checkout $TARGET_BRANCH
 
       - name: Setup Node.js
         if: steps.check_docs_repo.outputs.skip == 'false'
@@ -202,6 +262,7 @@ jobs:
         with:
           path: docs-repo
           token: ${{ env.DOCUMENTATION_TOKEN }}
+          base: ${{ env.DOCUMENTATION_TARGET_BRANCH }}
           commit-message: 'docs: Add documentation for ${{ matrix.example }}'
           title: 'Auto-generated documentation for ${{ matrix.example }}'
           body: |
@@ -214,6 +275,9 @@ jobs:
             - Created interactive GitHub Gist with complete example code
             - Followed existing documentation structure and patterns
             - Included code examples, Gist embeds, and proper formatting
+
+            ### Target Branch
+            This PR targets the `${{ env.DOCUMENTATION_TARGET_BRANCH }}` branch for integration.
 
             ### Source
             Generated from: `${{ matrix.example }}`
