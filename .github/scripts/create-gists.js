@@ -149,8 +149,9 @@ class GistManager {
         if (gistInfo) {
             console.log(`🔗 Gist created successfully: ${gistInfo.url}`);
             
-            // Save Gist info for the documentation generation step
-            const gistDataFile = path.join(process.cwd(), `gist-${path.basename(exampleFile, '.cs')}.json`);
+            // Save Gist info for the documentation generation step in the same directory as this script
+            const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+            const gistDataFile = path.join(scriptDir, `gist-${path.basename(exampleFile, '.cs')}.json`);
             writeFileSync(gistDataFile, JSON.stringify(gistInfo, null, 2));
             console.log(`💾 Gist data saved: ${gistDataFile}`);
             

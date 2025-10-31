@@ -132,8 +132,17 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
                 // In the examples repo .github/scripts directory
                 path.join(examplesRepoPath, '.github', 'scripts', `gist-${baseName}.json`),
                 // Current working directory
-                path.join(process.cwd(), `gist-${baseName}.json`)
-            ];
+                path.join(process.cwd(), `gist-${baseName}.json`),
+                // Try going up from examples repo path to find the real repo root
+                path.join(path.dirname(examplesRepoPath), '.github', 'scripts', `gist-${baseName}.json`),
+                // GitHub Actions specific: if examplesRepoPath ends with 'examples-repo', remove it
+                examplesRepoPath.endsWith('examples-repo') ? 
+                    path.join(examplesRepoPath.replace(/\/examples-repo$/, ''), '.github', 'scripts', `gist-${baseName}.json`) : null,
+                // Try absolute path resolution - go up two levels from script location  
+                path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '.github', 'scripts', `gist-${baseName}.json`),
+                // Try relative path from current working directory
+                path.resolve(process.cwd(), '..', '..', '.github', 'scripts', `gist-${baseName}.json`)
+            ].filter(Boolean); // Remove null values
             
             for (const gistDataFile of possiblePaths) {
                 console.log(`🔍 Looking for gist file: ${gistDataFile}`);
