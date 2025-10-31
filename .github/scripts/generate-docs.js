@@ -46,12 +46,29 @@ Please extract and provide:
 2. Description: A technical description of what this example demonstrates
 3. Category: The main category (Generation, Reading, Formatting, Advanced)
 4. Barcode Types: List of barcode types used (e.g., Code128, QR, DataMatrix)
-5. Key Features: List of key Aspose.BarCode features demonstrated
-6. Keywords: SEO-friendly keywords for the documentation
+5. Key Features: List of key Aspose.BarCode features demonstrated (MUST be an array of simple strings)
+6. Keywords: SEO-friendly keywords for the documentation (as an array of strings)
 7. Technical Summary: Brief technical explanation of the implementation
 8. Code Explanation: Step-by-step explanation of the main code sections
 
+IMPORTANT: 
+- key_features must be an array of simple strings, not objects
+- barcode_types must be an array of simple strings
+- keywords must be an array of simple strings
+
 Respond in JSON format with these keys: title, description, category, barcode_types, key_features, keywords, technical_summary, code_explanation
+
+Example format:
+{
+  "title": "Basic Barcode Generation Example",
+  "description": "Shows how to generate Code128 barcodes",
+  "category": "Generation",
+  "barcode_types": ["Code128"],
+  "key_features": ["License initialization", "Barcode generation", "File saving"],
+  "keywords": ["barcode", "Code128", "generation", "Aspose.BarCode"],
+  "technical_summary": "...",
+  "code_explanation": "..."
+}
 `;
 
         const payload = {
@@ -80,7 +97,24 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             // Extract JSON from the response
             const jsonMatch = content.match(/\{.*\}/s);
             if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+                const parsed = JSON.parse(jsonMatch[0]);
+                
+                // Validate and clean the response
+                const cleaned = {
+                    title: parsed.title || 'Unknown Example',
+                    description: parsed.description || 'Example description',
+                    category: parsed.category || 'General',
+                    barcode_types: Array.isArray(parsed.barcode_types) ? parsed.barcode_types : [],
+                    key_features: Array.isArray(parsed.key_features) ? 
+                        parsed.key_features.filter(f => typeof f === 'string' && f.trim()) : [],
+                    keywords: Array.isArray(parsed.keywords) ? parsed.keywords : 
+                        (typeof parsed.keywords === 'string' ? parsed.keywords.split(',').map(k => k.trim()) : []),
+                    technical_summary: parsed.technical_summary || '',
+                    code_explanation: parsed.code_explanation || ''
+                };
+                
+                console.log(`📋 AI Analysis Result:`, JSON.stringify(cleaned, null, 2));
+                return cleaned;
             } else {
                 throw new Error('No JSON found in response');
             }
@@ -112,7 +146,7 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             category: category,
             barcode_types: barcodeTypes,
             key_features: ['Barcode Generation', 'File Output', 'Custom Parameters'],
-            keywords: `Aspose.BarCode, .NET, ${category}, Barcode, C#`,
+            keywords: ['Aspose.BarCode', '.NET', category, 'Barcode', 'C#'],
             technical_summary: `This example shows how to use Aspose.BarCode for .NET for ${category.toLowerCase()}`,
             code_explanation: 'The example demonstrates basic usage patterns of the Aspose.BarCode library.'
         };
@@ -281,9 +315,33 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
             contentParts.push('## Key Features');
             contentParts.push('');
             analysis.key_features.forEach(feature => {
-                // Ensure feature is a string
-                const featureText = typeof feature === 'string' ? feature : String(feature);
-                contentParts.push(`- ${featureText}`);
+                // Properly convert feature to string - handle objects, arrays, etc.
+                let featureText;
+                if (typeof feature === 'string') {
+                    featureText = feature;
+                } else if (typeof feature === 'object' && feature !== null) {
+                    // Handle objects by extracting meaningful text
+                    if (feature.name || feature.title || feature.description) {
+                        featureText = feature.name || feature.title || feature.description;
+                    } else if (Array.isArray(feature)) {
+                        featureText = feature.join(', ');
+                    } else {
+                        // Try to extract the first string property
+                        const stringProps = Object.values(feature).filter(val => typeof val === 'string');
+                        featureText = stringProps.length > 0 ? stringProps[0] : JSON.stringify(feature);
+                    }
+                } else {
+                    featureText = String(feature);
+                }
+                
+                // Only add non-empty, meaningful features
+                if (featureText && featureText.trim() && 
+                    featureText !== '[object Object]' && 
+                    featureText !== 'null' && 
+                    featureText !== 'undefined' &&
+                    featureText.length > 1) {
+                    contentParts.push(`- ${featureText}`);
+                }
             });
             contentParts.push('');
         }
