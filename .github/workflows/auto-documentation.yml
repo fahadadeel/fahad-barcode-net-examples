@@ -113,6 +113,13 @@ jobs:
             --example-file "${{ matrix.example }}" \
             --examples-repo ".."
 
+      - name: Upload Gist Data
+        uses: actions/upload-artifact@v4
+        with:
+          name: gist-data-${{ strategy.job-index }}
+          path: .github/scripts/gist-*.json
+          retention-days: 1
+
   generate-documentation:
     needs: [detect-new-examples, validate-examples, create-gists]
     if: needs.detect-new-examples.outputs.has_new_examples == 'true' && needs.validate-examples.outputs.validation_passed == 'true'
@@ -164,6 +171,21 @@ jobs:
         if: steps.check_docs_repo.outputs.skip == 'false'
         working-directory: examples-repo/.github/scripts
         run: npm ci
+
+      - name: Download Gist Data
+        if: steps.check_docs_repo.outputs.skip == 'false'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gist-data-*
+          path: gist-artifacts/
+          merge-multiple: true
+
+      - name: Copy Gist Data
+        if: steps.check_docs_repo.outputs.skip == 'false'
+        run: |
+          mkdir -p examples-repo/.github/scripts/
+          cp -v gist-artifacts/*.json examples-repo/.github/scripts/ || echo "No gist files found"
+          ls -la examples-repo/.github/scripts/gist-*.json || echo "No gist files after copy"
 
       - name: Generate Documentation
         if: steps.check_docs_repo.outputs.skip == 'false'
