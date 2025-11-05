@@ -42,7 +42,7 @@ ${codeContent}
 \`\`\`
 
 Please extract and provide:
-1. Title: A clear, descriptive title for this example
+1. Title: A clear, descriptive title for this example (MAXIMUM 4 WORDS - be concise but descriptive)
 2. Description: A technical description of what this example demonstrates
 3. Category: The main category (Generation, Reading, Formatting, Advanced)
 4. Barcode Types: List of barcode types used (e.g., Code128, QR, DataMatrix)
@@ -52,6 +52,7 @@ Please extract and provide:
 8. Code Explanation: Step-by-step explanation of the main code sections
 
 IMPORTANT: 
+- title MUST be 4 words or less (e.g., "Basic Barcode Generation", "QR Code Reading", "Barcode Workflow Example")
 - key_features must be an array of simple strings, not objects
 - barcode_types must be an array of simple strings
 - keywords must be an array of simple strings
@@ -60,7 +61,7 @@ Respond in JSON format with these keys: title, description, category, barcode_ty
 
 Example format:
 {
-  "title": "Basic Barcode Generation Example",
+  "title": "Barcode Generation Example",
   "description": "Shows how to generate Code128 barcodes",
   "category": "Generation",
   "barcode_types": ["Code128"],
@@ -100,8 +101,18 @@ Example format:
                 const parsed = JSON.parse(jsonMatch[0]);
                 
                 // Validate and clean the response
+                let title = parsed.title || 'Unknown Example';
+                
+                // Enforce maximum 4 words for title
+                const titleWords = title.split(/\s+/);
+                if (titleWords.length > 4) {
+                    console.log(`⚠️ Title too long (${titleWords.length} words): "${title}"`);
+                    title = titleWords.slice(0, 4).join(' ');
+                    console.log(`✂️ Truncated to: "${title}"`);
+                }
+                
                 const cleaned = {
-                    title: parsed.title || 'Unknown Example',
+                    title: title,
                     description: parsed.description || 'Example description',
                     category: parsed.category || 'General',
                     barcode_types: Array.isArray(parsed.barcode_types) ? parsed.barcode_types : [],
