@@ -470,10 +470,27 @@ async function main() {
         console.log(`🎉 Validation completed: ${validCount} valid examples found!`);
         if (invalidCount > 0) {
             console.log(`⚠️ Note: ${invalidCount} examples failed validation and will be skipped.`);
+            console.log(`\n💡 TO FIX INVALID EXAMPLES:`);
+            console.log(`   1. Fix the code issues in the invalid examples`);
+            console.log(`   2. Delete the files from git: git rm <filename>`);
+            console.log(`   3. Commit the deletion: git commit -m "Remove invalid examples"`);
+            console.log(`   4. Re-add the fixed files: git add <filename>`);
+            console.log(`   5. Commit as new files: git commit -m "Add fixed examples"`);
+            console.log(`   6. Push changes: git push`);
+            console.log(`\n   This workflow only processes files with git status 'A' (Added).`);
+            console.log(`   Modified files are ignored to prevent duplicate processing.`);
         }
         process.exit(0);
     } else {
         console.error(`💥 All examples failed validation - no examples to process`);
+        console.log(`\n💡 TO FIX ALL EXAMPLES:`);
+        console.log(`   1. Fix the code issues in all examples`);
+        console.log(`   2. Delete the files from git: git rm <filenames>`);
+        console.log(`   3. Commit the deletion: git commit -m "Remove invalid examples"`);
+        console.log(`   4. Re-add the fixed files: git add <filenames>`);
+        console.log(`   5. Commit as new files: git commit -m "Add fixed examples"`);
+        console.log(`   6. Push changes: git push`);
+        console.log(`\n   This ensures the files have git status 'A' (Added) for processing.`);
         process.exit(1);
     }
 }
